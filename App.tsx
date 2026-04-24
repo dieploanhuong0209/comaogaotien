@@ -1,17 +1,20 @@
-import React, { useState } from 'react';
-import { Layers, Calculator, HelpCircle, LayoutDashboard, List, FileInput } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Layers, Calculator, HelpCircle, LayoutDashboard, List, FileInput, LogOut } from 'lucide-react';
 import CalculatorForm from './components/CalculatorForm';
 import InvoiceTable from './components/InvoiceTable';
 import Dashboard from './components/Dashboard';
 import BulkInputModal from './components/BulkInputModal';
 import ConfirmModal from './components/ConfirmModal';
 import AlertModal from './components/AlertModal';
+import LoginPage from './components/LoginPage';
 import { LineItem, RateCardItem, QualityLevel, Grade } from './types';
 import { ALL_ITEMS } from './services/mockData';
 import { parseBulkInput } from './services/parser';
 import * as XLSX from 'xlsx';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [loginError, setLoginError] = useState<string>('');
   const [items, setItems] = useState<LineItem[]>([]);
   const [activeTab, setActiveTab] = useState<'calculator' | 'dashboard'>('calculator');
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
@@ -19,6 +22,30 @@ function App() {
   // Modal states
   const [confirmConfig, setConfirmConfig] = useState<{isOpen: boolean, title: string, message: string, onConfirm: () => void} | null>(null);
   const [alertConfig, setAlertConfig] = useState<{isOpen: boolean, title: string, message: string, type: 'success' | 'error' | 'info'} | null>(null);
+
+  useEffect(() => {
+    const auth = sessionStorage.getItem('is_auth');
+    if (auth === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleLogin = (pass: string) => {
+    const envPass = import.meta.env.VITE_APP_PASS || 'HuongDiepp';
+
+    if (pass === envPass) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('is_auth', 'true');
+      setLoginError('');
+    } else {
+      setLoginError('Mật khẩu không chính xác');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('is_auth');
+  };
 
   // Helper to calculate total based on all factors
   const calculateTotal = (unitPrice: number, quantity: number, percentage: number, isOT: boolean) => {
@@ -178,6 +205,10 @@ function App() {
     XLSX.writeFile(wb, `Hương Diệp_Royalty_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={handleLogin} error={loginError} />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans text-black relative overflow-x-hidden">
       {/* Background Accents */}
@@ -249,6 +280,14 @@ function App() {
             >
               <FileInput size={16} />
               Nhập nhanh
+            </button>
+
+            <button 
+              onClick={handleLogout}
+              className="p-2 text-black/20 hover:text-black transition-all rounded-xl hover:bg-black/5"
+              title="Đăng xuất"
+            >
+              <LogOut size={20} />
             </button>
           </div>
         </div>
