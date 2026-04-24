@@ -38,7 +38,7 @@ function App() {
       sessionStorage.setItem('is_auth', 'true');
       setLoginError('');
     } else {
-      setLoginError('Mật khẩu không chính xác');
+      setLoginError('mật khẩu không chính xác');
     }
   };
 
